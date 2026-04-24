@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+        Schema::create('users', function (Blueprint $blueprint) {
+            $blueprint->id();
+            $blueprint->string('nama'); // Kita pakai nama, bukan name
+            $blueprint->string('username')->unique(); // Untuk login
+            $blueprint->string('password');
+            $blueprint->enum('role', ['owner', 'admin'])->default('admin'); // Role user
+            $blueprint->rememberToken();
+            $blueprint->timestamps();
         });
 
+        // Bagian ini opsional, untuk menangani sesi login Laravel 11/12
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
