@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Login; // 1. Tambahkan baris import ini
+use App\Filament\Pages\Auth\Login;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,6 +11,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -27,10 +28,37 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login(Login::class) // 2. Ubah ini agar mengarah ke class Login kustom
+            ->login(Login::class)
+
+            // ── Brand / Logo ──────────────────────────────────────────────
+            ->brandLogo(asset('images/logo-paralkes-white.png'))
+            ->darkModeBrandLogo(asset('images/logo-paralkes.png')) // logo putih untuk dark mode
+            ->brandLogoHeight('3rem')
+            // ─────────────────────────────────────────────────────────────
+
+            // ── Skema Warna: Zinc (abu-abu premium menuju hitam) ──────────
             ->colors([
-                'primary' => Color::Amber,
+                'primary'   => Color::Zinc,
+                'gray'      => Color::Zinc,
+                'danger'    => Color::Rose,
+                'warning'   => Color::Amber,
+                'success'   => Color::Emerald,
+                'info'      => Color::Sky,
             ])
+            // ─────────────────────────────────────────────────────────────
+
+            // ── Tipografi Modern ─────────────────────────────────────────
+            ->font('Plus Jakarta Sans')
+            // ─────────────────────────────────────────────────────────────
+
+            // ── Dark Mode ────────────────────────────────────────────────
+            ->darkMode(true)
+            // ─────────────────────────────────────────────────────────────
+
+            // ── Lebar konten ─────────────────────────────────────────────
+            ->maxContentWidth(MaxWidth::Full)
+            // ─────────────────────────────────────────────────────────────
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
