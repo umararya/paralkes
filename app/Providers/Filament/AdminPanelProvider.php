@@ -46,7 +46,11 @@ class AdminPanelProvider extends PanelProvider
                 'info'      => Color::Sky,
             ])
             // ─────────────────────────────────────────────────────────────
-
+            // Tambahkan di dalam method panel(), setelah ->colors([...])
+            ->navigationGroups([
+                'Admin',
+                'Owner',
+            ])
             // ── Tipografi Modern ─────────────────────────────────────────
             ->font('Plus Jakarta Sans')
             // ─────────────────────────────────────────────────────────────
