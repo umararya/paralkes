@@ -1,6 +1,8 @@
 {{--
     resources/views/filament/monitoring.blade.php
-    Konten modal Monitoring — dipanggil via Action::modalContent()
+    Tabel monitoring penyewaan aktif dengan tombol Konfirmasi per row.
+    Tombol Konfirmasi men-dispatch Livewire event ke ListPenyewaans
+    untuk membuka modal Action konfirmasi.
 --}}
 
 <div class="space-y-5 py-1">
@@ -8,13 +10,11 @@
     {{-- ── Summary Badges ──────────────────────────────────────────── --}}
     <div class="flex flex-wrap items-center gap-3">
 
-        {{-- Total aktif --}}
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-sm text-gray-700 dark:text-gray-300 font-medium">
             <x-heroicon-s-queue-list class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             Total Aktif: <span class="font-bold text-gray-900 dark:text-white">{{ $records->count() }}</span>
         </div>
 
-        {{-- Perlu konfirmasi --}}
         @if($totalUrgent > 0)
             <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-300 font-medium">
                 <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
@@ -22,7 +22,6 @@
             </div>
         @endif
 
-        {{-- Berjalan normal --}}
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sm text-sky-700 dark:text-sky-300 font-medium">
             <x-heroicon-s-arrow-trending-up class="w-4 h-4" />
             Berjalan Normal: <span class="font-bold">{{ $totalNormal }}</span>
@@ -33,7 +32,6 @@
     {{-- ── Tabel ────────────────────────────────────────────────────── --}}
     @if($records->isEmpty())
 
-        {{-- Empty State --}}
         <div class="flex flex-col items-center justify-center py-12 text-center">
             <div class="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center mb-4">
                 <x-heroicon-o-check-badge class="w-8 h-8 text-emerald-500" />
@@ -49,34 +47,19 @@
         <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm">
             <table class="w-full text-sm">
 
-                {{-- Head --}}
                 <thead>
                     <tr class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-10">
-                            No
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            Nama
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            No HP
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            Barang Disewa
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 max-w-[180px]">
-                            Alamat
-                        </th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            Sisa Durasi
-                        </th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            Status
-                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-10">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Nama</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">No HP</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Barang Disewa</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 max-w-[180px]">Alamat</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Sisa Durasi</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Aksi</th>
                     </tr>
                 </thead>
 
-                {{-- Body --}}
                 <tbody class="divide-y divide-gray-100 dark:divide-zinc-700/60">
 
                     @foreach($records as $index => $record)
@@ -101,9 +84,7 @@
 
                             {{-- Nama --}}
                             <td class="px-4 py-3.5">
-                                <span class="font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ $record->nama }}
-                                </span>
+                                <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $record->nama }}</span>
                             </td>
 
                             {{-- No HP --}}
@@ -135,55 +116,34 @@
                                 @endif
                             </td>
 
-                            {{-- Sisa Durasi (hitung mundur) --}}
+                            {{-- Sisa Durasi --}}
                             <td class="px-4 py-3.5 text-center whitespace-nowrap">
-
                                 @if($isOverdue)
-                                    {{-- Sudah lewat batas --}}
                                     <div class="flex flex-col items-center gap-0.5">
                                         <span class="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400">
                                             <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
                                             Terlambat
                                         </span>
-                                        <span class="text-xs text-rose-500 dark:text-rose-500">
-                                            {{ abs($sisaHari) }} hari lalu
-                                        </span>
+                                        <span class="text-xs text-rose-500 dark:text-rose-500">{{ abs($sisaHari) }} hari lalu</span>
                                     </div>
-
                                 @elseif($sisaHari === 0)
-                                    {{-- Berakhir hari ini --}}
                                     <div class="flex flex-col items-center gap-0.5">
                                         <span class="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
                                             <x-heroicon-s-clock class="w-3.5 h-3.5 animate-pulse" />
                                             Hari Ini!
                                         </span>
-                                        <span class="text-xs text-amber-500 dark:text-amber-500">
-                                            {{ $record->tanggal_selesai->format('d/m/Y') }}
-                                        </span>
+                                        <span class="text-xs text-amber-500 dark:text-amber-500">{{ $record->tanggal_selesai->format('d/m/Y') }}</span>
                                     </div>
-
                                 @elseif($sisaHari <= 3)
-                                    {{-- 1–3 hari tersisa --}}
                                     <div class="flex flex-col items-center gap-0.5">
-                                        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">
-                                            {{ $sisaHari }} hari
-                                        </span>
-                                        <span class="text-xs text-gray-400 dark:text-gray-500">
-                                            s/d {{ $record->tanggal_selesai->format('d/m/Y') }}
-                                        </span>
+                                        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ $sisaHari }} hari</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">s/d {{ $record->tanggal_selesai->format('d/m/Y') }}</span>
                                     </div>
-
                                 @else
-                                    {{-- Masih aman --}}
                                     <div class="flex flex-col items-center gap-0.5">
-                                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                            {{ $sisaHari }} hari
-                                        </span>
-                                        <span class="text-xs text-gray-400 dark:text-gray-500">
-                                            s/d {{ $record->tanggal_selesai->format('d/m/Y') }}
-                                        </span>
+                                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $sisaHari }} hari</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">s/d {{ $record->tanggal_selesai->format('d/m/Y') }}</span>
                                     </div>
-
                                 @endif
                             </td>
 
@@ -210,6 +170,40 @@
                                 @endif
                             </td>
 
+                            {{-- ── Tombol Konfirmasi ─────────────────────── --}}
+                            <td class="px-4 py-3.5 text-center">
+                                {{--
+                                    Dispatch event Livewire ke ListPenyewaans.
+                                    Event 'buka-konfirmasi' akan menset konfirmasiRecordId
+                                    lalu membuka Action modal 'konfirmasi_penyewaan'.
+                                --}}
+                                <button
+                                    type="button"
+                                    wire:click="$dispatch('buka-konfirmasi', { id: {{ $record->id }} })"
+                                    @class([
+                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold',
+                                        'transition-all duration-150 cursor-pointer',
+                                        'border',
+                                        // Urgent / overdue → warna amber/merah
+                                        'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white border-amber-600 shadow-sm hover:shadow-amber-200 dark:hover:shadow-amber-900/40' => $isUrgent || $isOverdue,
+                                        // Normal → warna zinc/abu
+                                        'bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100 border-zinc-300 dark:border-zinc-600' => ! $isUrgent && ! $isOverdue,
+                                    ])
+                                >
+                                    @if($isUrgent || $isOverdue)
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Konfirmasi
+                                    @else
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Selesaikan
+                                    @endif
+                                </button>
+                            </td>
+
                         </tr>
                     @endforeach
 
@@ -217,14 +211,9 @@
             </table>
         </div>
 
-        {{-- Footer info --}}
         <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 px-1">
-            <span>
-                Data diperbarui secara real-time saat modal dibuka.
-            </span>
-            <span>
-                Total: {{ $records->count() }} penyewaan aktif
-            </span>
+            <span>Data diperbarui secara real-time saat modal dibuka.</span>
+            <span>Total: {{ $records->count() }} penyewaan aktif</span>
         </div>
 
     @endif
