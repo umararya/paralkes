@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Penyewaan extends Model
 {
@@ -16,7 +17,7 @@ class Penyewaan extends Model
         'nomor_hp',
         'produk_alat_kesehatan',
         'tanggal_mulai',
-        'tanggal_selesai',
+        'tanggal_selesai',   // fillable agar fitur Extend bisa update kolom ini
         'pengiriman',
         'biaya_ongkir',
         'alamat_penyewa',
@@ -37,34 +38,120 @@ class Penyewaan extends Model
         ];
     }
 
-    // ── Accessor: hitung durasi sewa dalam hari ──────────────────────
+    // =========================================================
+    // ACCESSOR: Sisa Hari
+    // =========================================================
+
+    /**
+     * Hitung sisa hari dari hari ini sampai tanggal_selesai.
+     *
+     * - Positif  : sewa masih berjalan, angka = sisa hari
+     * - 0        : hari ini adalah hari terakhir
+     * - Negatif  : sudah melewati tanggal selesai (sewa terlambat)
+     *
+     * @return int
+     */
+    public function getSisaHariAttribute(): int
+    {
+        if (! $this->tanggal_selesai) {
+            return 0;
+        }
+
+        // diffInDays() selalu positif; kita perlu cek arahnya manual
+        $today = Carbon::today();
+        $selesai = Carbon::parse($this->tanggal_selesai)->startOfDay();
+
+        return $today->diffInDays($selesai, false); // false = signed (bisa negatif)
+    }
+
+    /**
+     * Hitung total durasi sewa dalam hari (mulai → selesai).
+     *
+     * @return int
+     */
     public function getDurasiHariAttribute(): int
     {
         if (! $this->tanggal_mulai || ! $this->tanggal_selesai) {
             return 0;
         }
 
-        return (int) $this->tanggal_mulai->diffInDays($this->tanggal_selesai);
+        return (int) Carbon::parse($this->tanggal_mulai)
+            ->diffInDays(Carbon::parse($this->tanggal_selesai));
     }
 
-    // ── Helper: label human-readable untuk enum status ───────────────
+    // =========================================================
+    // ACCESSOR: Status Otomatis (berbasis sisa hari)
+    // =========================================================
+
+    /**
+     * Tentukan status otomatis berdasarkan sisa hari sewa.
+     *
+     * Aturan:
+     *   - Status manual 'selesai'  → tetap 'selesai' (tidak di-override)
+     *   - Sisa hari > 3            → 'berjalan'
+     *   - Sisa hari 1–3 (inklusif) → 'segera konfirmasi'
+     *   - Sisa hari <= 0           → 'segera konfirmasi'
+     *     (sudah lewat tapi belum dikonfirmasi selesai)
+     *
+     * @return string
+     */
+    public function getStatusOtomatisAttribute(): string
+    {
+        // Jika admin sudah manual set 'selesai', hormati pilihan itu
+        if ($this->status === 'selesai') {
+            return 'selesai';
+        }
+
+        $sisaHari = $this->sisa_hari;
+
+        if ($sisaHari > 3) {
+            return 'berjalan';
+        }
+
+        return 'segera konfirmasi';
+    }
+
+    /**
+     * Label status otomatis yang tampil di UI (dengan tanda seru).
+     *
+     * @return string
+     */
+    public function getLabelStatusOtomatisAttribute(): string
+    {
+        return match ($this->status_otomatis) {
+            'berjalan'          => 'Berjalan',
+            'segera konfirmasi' => 'Perlu Konfirmasi!',
+            'selesai'           => 'Selesai',
+            default             => ucfirst($this->status_otomatis),
+        };
+    }
+
+    // =========================================================
+    // ACCESSOR: Label Helper (manual status dari DB)
+    // =========================================================
+
+    /**
+     * Label human-readable untuk nilai kolom `status` di database.
+     */
     public function getLabelStatusAttribute(): string
     {
         return match ($this->status) {
             'berjalan'          => 'Berjalan',
-            'segera_konfirmasi' => 'Segera Konfirmasi',
+            'segera konfirmasi' => 'Segera Konfirmasi',
             'selesai'           => 'Selesai',
             default             => ucfirst($this->status),
         };
     }
 
-    // ── Helper: label human-readable untuk enum pengiriman ───────────
+    /**
+     * Label human-readable untuk enum `pengiriman`.
+     */
     public function getLabelPengirimanAttribute(): string
     {
         return match ($this->pengiriman) {
             'mandiri'      => 'Mandiri',
-            'gosend_grab'  => 'GoSend / Grab',
-            'rental_mobil' => 'Rental Mobil',
+            'gosend_grab'  => 'GoSend / GrabExpress',
+            'rental_mobil' => 'Rental Mobil Paralkes',
             default        => ucfirst($this->pengiriman),
         };
     }
